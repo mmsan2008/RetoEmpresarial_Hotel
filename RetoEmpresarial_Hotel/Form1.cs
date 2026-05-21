@@ -1,67 +1,71 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace RetoEmpresarial_Hotel
 {
-    //Cliente web Form
-
-    public partial class Form1 : Form
+    public partial class FormLogIn : Form
     {
-        UCInicio ucInicio = new UCInicio();
-        UCHabitaciones ucHabitaciones = new UCHabitaciones();
-        UCServicios ucServicios = new UCServicios();
-        UCMiReserva ucMiReserva = new UCMiReserva();
-        UCReservaWeb ucReservaWeb = new UCReservaWeb();
-        public Form1()
+        public FormLogIn()
         {
             InitializeComponent();
-        }
-        private void Form1_Load(object sender, EventArgs e)
-        {
-            MostrarVista(ucInicio);
-        }
-        
-        public void MostrarVista(UserControl vista)
-        {
-            panelContenedor.Controls.Clear();
-            vista.Dock = DockStyle.Fill;
-            panelContenedor.Controls.Add(vista);
+            lblError.Visible = false;
+            txtboxContrasena.UseSystemPasswordChar = false;
+            txtboxContrasena.PlaceholderText = "Contraseña / Nombre (cliente nuevo)";
         }
 
-        private void btnInicio_Click(object sender, EventArgs e)
+        private void btnIngresar_Click(object sender, EventArgs e)
         {
-            MostrarVista(ucInicio);
-        }
-        private void guna2Button1_Click(object sender, EventArgs e)
-        {
-            MostrarVista(ucHabitaciones);
-        }
-        private void btnServicios_Click(object sender, EventArgs e)
-        {
-            MostrarVista(ucServicios);
+            string input = txtboxUsuario.Text.Trim();
+            lblError.Visible = false;
+
+            if (!int.TryParse(input, out int codigo))
+            {
+                MostrarError("Ingrese un número válido (documento o código).");
+                return;
+            }
+
+            if (codigo == 1) // ── Administrador ──────────────────────────
+            {
+                App.UsuarioActual = new Administrador("Administrador", 1, App.Hotel);
+                this.Hide();
+                new Form3Admin().ShowDialog();
+                App.UsuarioActual = null;
+                this.Close();
+            }
+            else if (codigo == 2) // ── Personal / Recepcionista ───────────
+            {
+                App.UsuarioActual = new Personal("Recepcionista", 2, App.Hotel);
+                this.Hide();
+                new Form2Recepcion().ShowDialog();
+                App.UsuarioActual = null;
+                this.Close();
+            }
+            else // ── Cliente ────────────────────────────────────────────
+            {
+                Cliente cliente = App.Hotel.Clientes.BuscarPorDocumento(codigo);
+
+                if (cliente == null) // cliente nuevo: necesita nombre
+                {
+                    string nombre = txtboxContrasena.Text.Trim();
+                    if (string.IsNullOrWhiteSpace(nombre))
+                    {
+                        MostrarError("Cliente nuevo: escriba su nombre en el campo inferior.");
+                        return;
+                    }
+                    cliente = new Cliente(nombre, codigo, App.Hotel);
+                    App.Hotel.Clientes.Registrar(cliente);
+                }
+
+                App.UsuarioActual = cliente;
+                this.DialogResult = DialogResult.OK;
+                this.Close();
+            }
         }
 
-        private void btnMiReserva_Click(object sender, EventArgs e)
+        private void MostrarError(string msg)
         {
-            MostrarVista(ucMiReserva);
+            lblError.Text = msg;
+            lblError.Visible = true;
         }
-        private void btnReservar_Click(object sender, EventArgs e)
-        {
-            MostrarVista(ucReservaWeb);
-        }
-        private void btnLogIn_Click(object sender, EventArgs e)
-        {
-            FormLogIn login = new FormLogIn();
-            login.Show();
-        }
-
-        
     }
 }

@@ -77,6 +77,11 @@ namespace RetoEmpresarial_Hotel
         {
 
         }
+
+        private void panel12_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
     }
 }
 
